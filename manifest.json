@@ -5,15 +5,33 @@
   "developer_name": "Ricardo Silverio",
   "icon": "images/bitbucket.png",
   "options": {
-    "query_debounce": 1
+    "query_debounce": 0.2
   },
   "preferences": [
     {
-      "id": "bitbucket",
+      "id": "search",
       "type": "keyword",
       "name": "Bitbucket Repository",
       "description": "Search Bitbucket repositories",
       "default_value": "bbt"
+    },
+    {
+      "id": "workspace",
+      "type": "input",
+      "name": "Bitbucket Workspace",
+      "description": "Bitbucket workspace to search for repositories"
+    },
+    {
+      "id": "username",
+      "type": "input",
+      "name": "Bitbucket Username",
+      "description": "Bitbucket username to authenticate. More details on README."
+    },
+    {
+      "id": "password",
+      "type": "input",
+      "name": "Bitbucket App Password",
+      "description": "Bitbucket App password to authenticate. More details on README."
     }
   ]
 }

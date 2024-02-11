@@ -27,7 +27,7 @@
 
 > A workspace is where you will create repositories, collaborate on your code, and organize different streams of work in your Bitbucket Cloud account.
 
-- To find out the workspace id you are working on, go to any repository page and then copy this part of the URL: www.bitbucket.org/**workspace ID**/my-repository-name
+- To find out the workspace id you are working on, go to any repository page and then copy this part of the URL: www[]().bitbucket.org/**workspace ID**/my-repository-name
 
 ### Putting all together
 

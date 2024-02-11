@@ -15,6 +15,7 @@ PIPELINES_ICON = "images/pipelines.svg"
 PULL_REQUEST_ICON = "images/pull-request.svg"
 SETTINGS_ICON = "images/settings.svg"
 ERROR_ICON = "images/error.svg"
+MAX_RESULTS = 15
 
 class BitbucketSearch(Extension):
     def __init__(self):
@@ -28,12 +29,17 @@ class KeywordQueryEventListener(EventListener):
     def assemble_missing_preference_message(self, preference):
         return RenderResultListAction([
             ExtensionResultItem(
-                icon=BITBUCKET_ICON,
-                name="Missing Bitbucket preference",
+                icon=ERROR_ICON,
+                name="Missing Bitbucket required preference",
                 description=f"Please set your Bitbucket {preference} in the extension preferences",
                 on_enter=DoNothingAction()
             )
         ])
+    
+    def get_connector(self, workspace, username, password):
+        if not hasattr(self, "connector") or self.connector.workspace != workspace or self.connector.username != username or self.connector.password != password:
+            self.connector = BitbucketConnector(workspace, username, password)
+        return self.connector
 
     def on_event(self, event, extension):
 
@@ -52,6 +58,7 @@ class KeywordQueryEventListener(EventListener):
         if not password:
             return self.assemble_missing_preference_message('password')            
         
+        connector = self.get_connector(workspace, username, password)
         query = event.get_argument() or ""
 
         if len(query) < 3:
@@ -64,11 +71,9 @@ class KeywordQueryEventListener(EventListener):
                 )
             ])
 
-        connector = BitbucketConnector(workspace, username, password)
-
         search_terms = query.lower().strip()
         try:
-            repositories = connector.get_repositories(search_terms)
+            repositories = connector.get_repositories(search_terms, MAX_RESULTS)
         except Exception as err:
             print(err)
             return RenderResultListAction([

@@ -1,24 +1,20 @@
-import requests
-import base64
-
 from ulauncher.api.client.EventListener import EventListener
 from ulauncher.api.client.Extension import Extension
 from ulauncher.api.shared.action.DoNothingAction import DoNothingAction
-from ulauncher.api.shared.action.RenderResultListAction import \
-    RenderResultListAction
-from ulauncher.api.shared.action.ExtensionCustomAction import \
-    ExtensionCustomAction
-from ulauncher.api.shared.action.ActionList import \
-    ActionList
+from ulauncher.api.shared.action.RenderResultListAction import RenderResultListAction
+from ulauncher.api.shared.action.ExtensionCustomAction import ExtensionCustomAction
 from ulauncher.api.shared.event import ItemEnterEvent, KeywordQueryEvent
 from ulauncher.api.shared.action.OpenUrlAction import OpenUrlAction
 from ulauncher.api.shared.item.ExtensionResultItem import ExtensionResultItem
+
+from bitbucket_connector import BitbucketConnector
 
 BITBUCKET_ICON = "images/bitbucket.png"
 CODE_ICON = "images/code.svg"
 PIPELINES_ICON = "images/pipelines.svg"
 PULL_REQUEST_ICON = "images/pull-request.svg"
 SETTINGS_ICON = "images/settings.svg"
+ERROR_ICON = "images/error.svg"
 
 class BitbucketSearch(Extension):
     def __init__(self):
@@ -68,18 +64,23 @@ class KeywordQueryEventListener(EventListener):
                 )
             ])
 
+        connector = BitbucketConnector(workspace, username, password)
+
         search_terms = query.lower().strip()
-        params = {
-            "q": f"slug~\"{search_terms}\" OR name~\"{search_terms}\"",
-            "fields": "values.slug,values.name,values.links.html.href,next,page,size",
-        }
-        headers = {
-            "Authorization": "Basic " + base64.b64encode(f"{username}:{password}".encode()).decode(),
-        }
-        response = requests.get(f"https://api.bitbucket.org/2.0/repositories/{workspace}", params=params, headers=headers)
-        response_payload = response.json()
-        size = response_payload.get("size", 0)
-        if size == 0:
+        try:
+            repositories = connector.get_repositories(search_terms)
+        except Exception as err:
+            print(err)
+            return RenderResultListAction([
+                ExtensionResultItem(
+                    icon=ERROR_ICON,
+                    name="Error fetching repositories",
+                    description=f"{err}",
+                    on_enter=DoNothingAction()
+                )
+            ])
+        
+        if len(repositories) == 0:
             return RenderResultListAction([
                 ExtensionResultItem(
                     icon=BITBUCKET_ICON,
@@ -89,19 +90,15 @@ class KeywordQueryEventListener(EventListener):
                 )
             ])
         
-        for repo in response_payload.get("values", []):
-            name = repo.get("slug")
-            url = repo.get("links").get("html").get("href")
+        for repo in repositories:
             items.append(ExtensionResultItem(
                 icon=BITBUCKET_ICON,
-                name=name,
-                description=url,
-                on_enter=ActionList([
-                    ExtensionCustomAction(
-                        data={ "name": name, "url": url },
-                        keep_app_open=True
-                    )
-                ])
+                name=repo.name,
+                description=repo.url,
+                on_enter=ExtensionCustomAction(
+                    data={ "name": repo.name, "url": repo.url },
+                    keep_app_open=True
+                )
             ))
         
         return RenderResultListAction(items)

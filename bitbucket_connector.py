@@ -1,6 +1,8 @@
 import requests
 import base64
 
+MAX_PAGE_LENGTH = 100
+
 class BitbucketRepository:
 
   def __init__(self, name, url):
@@ -30,11 +32,13 @@ class BitbucketConnector:
         return self.handle_query(url, params, limit, results)
     return results
 
-  def get_repositories(self, query, limit):
+  def get_repositories(self, query, limit = 15):
+    page_length = min(limit, MAX_PAGE_LENGTH)
     params = {
         "q": f"slug~\"{query}\" OR name~\"{query}\"",
         "fields": "values.slug,values.links.html.href,next,page",
-        "sort": "-updated_on"
+        "sort": "-updated_on",
+        "pagelen": page_length
     }
     repositories = self.handle_query(f"https://api.bitbucket.org/2.0/repositories/{self.workspace}", params, limit)
     return [BitbucketRepository(repo.get("slug"), repo.get("links").get("html").get("href")) for repo in repositories]

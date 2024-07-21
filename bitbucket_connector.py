@@ -32,7 +32,7 @@ class BitbucketConnector:
         return self.handle_query(url, params, limit, results)
     return results
 
-  def get_repositories(self, query, limit):
+  def get_repositories(self, query, limit = 15):
     page_length = min(limit, MAX_PAGE_LENGTH)
     params = {
         "q": f"slug~\"{query}\" OR name~\"{query}\"",
